@@ -1,0 +1,8 @@
+.git42
+.githome
+.DS_Store
+*.out
+*.o
+gitscript.sh
+.vscode
+*.txt
