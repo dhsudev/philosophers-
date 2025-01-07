@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ltrevin- <ltrevin-@student.42.fr>          +#+  +:+       +#+        */
+/*   By: lua <lua@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/03 16:53:21 by ltrevin-          #+#    #+#             */
-/*   Updated: 2025/01/03 20:18:05 by ltrevin-         ###   ########.fr       */
+/*   Updated: 2025/01/05 20:02:13 by lua              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,6 @@ void swap_forks(t_philo *philo)
 {
     t_fork *tmp;
 
-    printf("swapping forks for philo %d\n", philo->id);
     tmp = philo->first_f;
     philo->first_f = philo->second_f;
     philo->second_f = tmp;
@@ -46,6 +45,7 @@ int prepare_table(t_table *table)
         table->philos[i].table = table;
         table->philos[i].first_f = &table->forks[i];
         table->philos[i].second_f = &table->forks[(i + 1) % table->n_philos];
+        table->philos[i].last_meal = 0;
         if(table->philos[i].id % 2) // if the philo is odd we swap the forks
             swap_forks(&table->philos[i]);
         if(pthread_mutex_init(&table->philos[i].read, NULL))
@@ -87,7 +87,7 @@ int continue_dinner(t_table *table)
 void search_full_philos(t_table *table)
 {
     int i;
-    int full_philos;
+    int full_philos = 0;
 
     if(table->n_meals == -1)
         return ;
@@ -98,9 +98,14 @@ void search_full_philos(t_table *table)
         if(table->philos[i].n_meals >= table->n_meals)
             full_philos++;
         pthread_mutex_unlock(&table->philos[i].read);
+        i++;
     }
-    if(full_philos == table->n_philos)
+    if(full_philos >= table->n_philos)
     {
+        
+        pthread_mutex_lock(&table->print);
+        printf("---------ALL PHILOS ARE FULL---------\n");
+        pthread_mutex_unlock(&table->print);
         pthread_mutex_lock(&table->read);
         table->end_dinner = 1;
         pthread_mutex_unlock(&table->read);
@@ -112,10 +117,13 @@ void search_death_philos(t_table *table)
     int i;
 
     i = 0;
+    //pthread_mutex_lock(&table->print);
+    //printf("Searching death philos\n");
+    //pthread_mutex_unlock(&table->print);
     while (i < table->n_philos)
     {
         pthread_mutex_lock(&table->philos[i].read);
-        if(get_time(table) - table->philos[i].last_meal > table->t_die)
+        if(get_time(table) - table->philos[i].last_meal >= table->t_die)
         {
             pthread_mutex_lock(&table->print);
             printf(RED "[%lu] %d is dead" RESET "\n" , get_time(table), table->philos[i].id);
@@ -123,12 +131,11 @@ void search_death_philos(t_table *table)
             pthread_mutex_lock(&table->read);
             table->end_dinner = 1;
             pthread_mutex_unlock(&table->read);
-            pthread_mutex_unlock(&table->philos[i].read);
-            break;
+            i = table->n_philos;
         }
         pthread_mutex_unlock(&table->philos[i].read);
+        i++;
     }
-    
 }
 
 int init_dinner(t_table *table)
@@ -136,6 +143,7 @@ int init_dinner(t_table *table)
     int i;
 
     i = 0;
+    pthread_mutex_lock(&table->read);
     table->t_start = get_current_time();
     // create threads
     while(i < table->n_philos)
@@ -144,13 +152,21 @@ int init_dinner(t_table *table)
             return (ft_error(WRONG_THREAD, 0));
         i++;
     }
+    pthread_mutex_unlock(&table->read);
     // dinner, check if the dinner is over
     while(continue_dinner(table))
     {
+        
         // check if a philo is dead
         search_death_philos(table);
+        if(!continue_dinner(table))
+            break;
+        // search if all philos are full
         search_full_philos(table);
     }
+    pthread_mutex_lock(&table->print);
+    printf("dinner ended\n");
+    pthread_mutex_unlock(&table->print);
     //join threads
     i = 0;
     while(i < table->n_philos)
