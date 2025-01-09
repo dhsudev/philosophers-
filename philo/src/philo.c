@@ -6,7 +6,7 @@
 /*   By: lua.trevin.7e8@itb.cat <lua.trevin.7e8@    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/03 17:31:18 by ltrevin-          #+#    #+#             */
-/*   Updated: 2025/01/09 08:52:30 by lua.trevin.      ###   ########.fr       */
+/*   Updated: 2025/01/09 09:00:29 by lua.trevin.      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,12 +85,15 @@ void philo_eat(t_philo *philo)
     // eat
     pthread_mutex_lock(&philo->read);
     philo->last_meal = get_time(philo->table);
-    philo->n_meals++;
     pthread_mutex_unlock(&philo->read);
     comunicate(EAT, philo->id, philo->table);
     if(contiue_dinner(philo->table))
+    {
         usleep(philo->table->t_eat * 1000);
-    //pthread_mutex_unlock(&philo->read);
+        pthread_mutex_lock(&philo->read);
+        philo->n_meals++;
+        pthread_mutex_unlock(&philo->read);
+    }//pthread_mutex_unlock(&philo->read);
     // release forks
     pthread_mutex_unlock(&philo->first_f->mutex);
     pthread_mutex_unlock(&philo->second_f->mutex);
