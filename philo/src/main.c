@@ -6,7 +6,7 @@
 /*   By: lua.trevin.7e8@itb.cat <lua.trevin.7e8@    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/03 16:53:21 by ltrevin-          #+#    #+#             */
-/*   Updated: 2025/01/09 08:52:00 by lua.trevin.      ###   ########.fr       */
+/*   Updated: 2025/01/09 09:42:06 by lua.trevin.      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,8 @@ void swap_forks(t_philo *philo)
 
     tmp = philo->first_f;
     philo->first_f = philo->second_f;
-    philo->second_f = tmp;
+    if(philo->table->n_meals != 1)
+        philo->second_f = tmp;
 }
 
 int prepare_table(t_table *table)
@@ -117,9 +118,6 @@ void search_death_philos(t_table *table)
     int i;
 
     i = 0;
-    //pthread_mutex_lock(&table->print);
-    //printf("Searching death philos\n");
-    //pthread_mutex_unlock(&table->print);
     while (i < table->n_philos)
     {
         pthread_mutex_lock(&table->philos[i].read);
@@ -156,6 +154,8 @@ int init_dinner(t_table *table)
     }
     pthread_mutex_unlock(&table->read);
     // dinner, check if the dinner is over
+    if(table->n_philos == 1)
+        table->end_dinner = 1; 
     while(continue_dinner(table))
     {
         

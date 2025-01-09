@@ -6,7 +6,7 @@
 /*   By: lua.trevin.7e8@itb.cat <lua.trevin.7e8@    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/03 17:31:18 by ltrevin-          #+#    #+#             */
-/*   Updated: 2025/01/09 09:00:29 by lua.trevin.      ###   ########.fr       */
+/*   Updated: 2025/01/09 09:45:38 by lua.trevin.      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,7 +67,7 @@ void philo_eat(t_philo *philo)
 {
     // take forks
     // take 1st fork
-    /* if(!contiue_dinner(philo->table))
+    /*if(!contiue_dinner(philo->table))
     {
         release_dinner_mutex(&philo->first_f->mutex, NULL, NULL);
         return ;
@@ -76,6 +76,12 @@ void philo_eat(t_philo *philo)
     comunicate(FORK, philo->id, philo->table);
     // take 2nd fork
     if(!contiue_dinner(philo->table))
+    {
+        philo->table->end_dinner = 1;
+        release_dinner_mutex(&philo->first_f->mutex, NULL, NULL);
+        return ;
+    }
+    if(philo->table->n_philos == 1)
     {
         release_dinner_mutex(&philo->first_f->mutex, NULL, NULL);
         return ;
@@ -93,14 +99,10 @@ void philo_eat(t_philo *philo)
         pthread_mutex_lock(&philo->read);
         philo->n_meals++;
         pthread_mutex_unlock(&philo->read);
-    }//pthread_mutex_unlock(&philo->read);
+    }
     // release forks
     pthread_mutex_unlock(&philo->first_f->mutex);
     pthread_mutex_unlock(&philo->second_f->mutex);
-    
-    //comunicate(DEBUG, philo->id, philo->table);
-    //pthread_mutex_lock(&philo->read);
-
 }
 
 void philo_sleep(t_philo *philo)
