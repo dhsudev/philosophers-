@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   philo.h                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lua <lua@student.42.fr>                    +#+  +:+       +#+        */
+/*   By: lua.trevin.7e8@itb.cat <lua.trevin.7e8@    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/03 16:58:40 by ltrevin-          #+#    #+#             */
-/*   Updated: 2025/01/05 20:06:46 by lua              ###   ########.fr       */
+/*   Updated: 2025/01/09 08:28:39 by lua.trevin.      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,7 +90,7 @@ typedef struct s_table
 
 int	parse_input(char **args, int argc, t_table *table);
 void *start_routine(void *data);
-int comunicate(int action, int id, t_table *table);
+void comunicate(int action, int id, t_table *table);
 void	ft_bzero(void *s, size_t n);
 unsigned long get_time(t_table *table);
 unsigned long	get_current_time(void);

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   philo.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lua <lua@student.42.fr>                    +#+  +:+       +#+        */
+/*   By: lua.trevin.7e8@itb.cat <lua.trevin.7e8@    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/03 17:31:18 by ltrevin-          #+#    #+#             */
-/*   Updated: 2025/01/05 20:06:27 by lua              ###   ########.fr       */
+/*   Updated: 2025/01/09 08:52:30 by lua.trevin.      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,15 +24,18 @@ int contiue_dinner(t_table *table)
     return (continue_eating);
 }
 
-int comunicate(int action, int id, t_table *table)
+void comunicate(int action, int id, t_table *table)
 {
-    if(!contiue_dinner(table))
-        return 0;
+    if(action == DEBUG)
+    {
+        printf(MAGENTA "Philo %d is still doing stuff\n" RESET, id);
+        return ;
+    }
     pthread_mutex_lock(&table->print);
     if(!contiue_dinner(table))
     {
         pthread_mutex_unlock(&table->print);
-        return 0;
+        return ;
     }
     if (action == EAT)
         printf(GREEN "[%lu] %d is eating" RESET "\n" , get_time(table), id);
@@ -47,48 +50,61 @@ int comunicate(int action, int id, t_table *table)
     else if (action == DEBUG)
         printf(MAGENTA "[%lu] %d dropping forks" RESET "\n", get_time(table), id);
     pthread_mutex_unlock(&table->print);
-    return 1;
 }
+
+void release_dinner_mutex(pthread_mutex_t *first_f, pthread_mutex_t *second_f, pthread_mutex_t *read)
+{
+    if(first_f)
+        pthread_mutex_unlock(first_f);
+    if(second_f)
+        pthread_mutex_unlock(second_f);
+    if(read)
+        pthread_mutex_unlock(read);
+}
+
 
 void philo_eat(t_philo *philo)
 {
-    int end = 0;
-    // take fork
+    // take forks
+    // take 1st fork
+    /* if(!contiue_dinner(philo->table))
+    {
+        release_dinner_mutex(&philo->first_f->mutex, NULL, NULL);
+        return ;
+    } */
     pthread_mutex_lock(&philo->first_f->mutex);
-    end = comunicate(FORK, philo->id, philo->table);
-    if(end == 0)
-        return;
+    comunicate(FORK, philo->id, philo->table);
     // take 2nd fork
+    if(!contiue_dinner(philo->table))
+    {
+        release_dinner_mutex(&philo->first_f->mutex, NULL, NULL);
+        return ;
+    }
     pthread_mutex_lock(&philo->second_f->mutex);
-    end = comunicate(FORK, philo->id, philo->table);
-    if(end == 0)
-        return;
+    comunicate(FORK, philo->id, philo->table);
     // eat
     pthread_mutex_lock(&philo->read);
     philo->last_meal = get_time(philo->table);
     philo->n_meals++;
     pthread_mutex_unlock(&philo->read);
-    end = comunicate(EAT, philo->id, philo->table);
-    if(end == 0)
-        return;
-    usleep(philo->table->t_eat * 1000);
+    comunicate(EAT, philo->id, philo->table);
+    if(contiue_dinner(philo->table))
+        usleep(philo->table->t_eat * 1000);
     //pthread_mutex_unlock(&philo->read);
     // release forks
     pthread_mutex_unlock(&philo->first_f->mutex);
     pthread_mutex_unlock(&philo->second_f->mutex);
     
-    end = comunicate(DEBUG, philo->id, philo->table);
+    //comunicate(DEBUG, philo->id, philo->table);
     //pthread_mutex_lock(&philo->read);
 
 }
 
 void philo_sleep(t_philo *philo)
 {
-    int end = 0;
-    end = comunicate(SLEEP, philo->id, philo->table);
-    if(end == 0)
-        return;
-    usleep(philo->table->t_sleep * 1000);
+    comunicate(SLEEP, philo->id, philo->table);
+    if(contiue_dinner(philo->table))
+        usleep(philo->table->t_sleep * 1000);
 }
 
 void philo_think(t_philo *philo)
@@ -108,6 +124,10 @@ void *start_routine(void *data)
         philo_eat(philo);
         philo_sleep(philo);
         philo_think(philo);
+        //comunicate(DEBUG, philo->id, philo->table);
     }
+    pthread_mutex_lock(&philo->table->print);
+    printf("Philo %d: I'm leaving!\n", philo->id);
+    pthread_mutex_unlock(&philo->table->print);
     return (NULL);
 }

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lua <lua@student.42.fr>                    +#+  +:+       +#+        */
+/*   By: lua.trevin.7e8@itb.cat <lua.trevin.7e8@    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/03 16:53:21 by ltrevin-          #+#    #+#             */
-/*   Updated: 2025/01/05 20:02:13 by lua              ###   ########.fr       */
+/*   Updated: 2025/01/09 08:52:00 by lua.trevin.      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -125,6 +125,7 @@ void search_death_philos(t_table *table)
         pthread_mutex_lock(&table->philos[i].read);
         if(get_time(table) - table->philos[i].last_meal >= table->t_die)
         {
+            pthread_mutex_unlock(&table->philos[i].read);
             pthread_mutex_lock(&table->print);
             printf(RED "[%lu] %d is dead" RESET "\n" , get_time(table), table->philos[i].id);
             pthread_mutex_unlock(&table->print);
@@ -133,7 +134,8 @@ void search_death_philos(t_table *table)
             pthread_mutex_unlock(&table->read);
             i = table->n_philos;
         }
-        pthread_mutex_unlock(&table->philos[i].read);
+        else
+            pthread_mutex_unlock(&table->philos[i].read);
         i++;
     }
 }
@@ -174,6 +176,7 @@ int init_dinner(t_table *table)
         pthread_join(table->philos[i].thread, NULL);
         i++;
     }
+    printf("all threads joined\n");
     return (0);
 }
 
